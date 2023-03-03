@@ -69,6 +69,8 @@ public:
         uint8_t start, command, returncode, length;
     } response_header_t;
 
+    typedef void (*serial_cb_t)(const uint8_t *data, const size_t length);
+
     // Enum values represent states of 2 bits
     typedef enum mosfet { MOSFET_NONE, MOSFET_CHARGE, MOSFET_DISCHARGE, MOSFET_BOTH } mosfet_t;
 
@@ -123,6 +125,9 @@ public:
     // expects other stream users to do the same (Joba_ESmart3 does the same)
     JbdBms( Stream &serial, uint32_t *prev = NULL, uint8_t command_delay_ms = 60 );
 
+    // set serial callback
+    void setSerialCb( serial_cb_t serial_cb );
+
     // Init dir_pin. -1 if RS485 hardware sets direction automatically
     void begin( int dir_pin = -1 );
 
@@ -176,6 +181,7 @@ private:
     uint32_t _prev_local;
     uint32_t *_prev;
     int _dir_pin;
+    serial_cb_t _serial_cb;
 };
 
 #endif

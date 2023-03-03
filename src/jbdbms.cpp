@@ -11,14 +11,20 @@ static void hex( const char *label, const uint8_t *data, size_t length ) {
     Serial.println();
 }
 
-
 // Basic methods
 
-JbdBms::JbdBms( Stream &serial, uint32_t *prev, uint8_t command_delay_ms ) 
-    : _serial(serial), _delay(command_delay_ms), _prev(prev), _dir_pin(-1) {
+JbdBms::JbdBms(
+    Stream &serial,
+    uint32_t *prev,
+    uint8_t command_delay_ms
+): _serial(serial), _delay(command_delay_ms), _prev(prev), _dir_pin(-1) {
     if (!_prev) {
         _prev = &_prev_local;
     }
+}
+
+void JbdBms::setSerialCb(serial_cb_t serial_cb) {
+    _serial_cb = serial_cb;
 }
 
 void JbdBms::begin( int dir_pin ) {
@@ -66,6 +72,15 @@ bool JbdBms::execute( request_header_t &header, uint8_t *command, uint8_t *resul
           && (_serial.readBytes(&stop, sizeof(stop)) == sizeof(stop))
           && isValid(header, result, crc)
           && header.returncode == 0;
+
+        if( _serial_cb ) {
+            uint8_t *completeSerialData = (uint8_t *)malloc(sizeof(header) + header.length + sizeof(crc) + sizeof(stop));
+            memcpy(completeSerialData, &header, sizeof(header));
+            memcpy(completeSerialData + sizeof(header), result, header.length);
+            memcpy(completeSerialData + sizeof(header) + header.length, &crc, sizeof(crc));
+            memcpy(completeSerialData + sizeof(header) + header.length + sizeof(crc), &stop, sizeof(stop));
+            _serial_cb(completeSerialData, sizeof(header) + header.length + sizeof(crc) + sizeof(stop));
+        }
     }
 
     *_prev = millis();
