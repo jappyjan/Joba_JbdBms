@@ -80,6 +80,7 @@ bool JbdBms::execute( request_header_t &header, uint8_t *command, uint8_t *resul
             memcpy(completeSerialData + sizeof(header) + header.length, &crc, sizeof(crc));
             memcpy(completeSerialData + sizeof(header) + header.length + sizeof(crc), &stop, sizeof(stop));
             _serial_cb(completeSerialData, sizeof(header) + header.length + sizeof(crc) + sizeof(stop));
+            free(completeSerialData);
         }
     }
 
